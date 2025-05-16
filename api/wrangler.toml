@@ -15,3 +15,6 @@ vars = { ENVIRONMENT = "production" }
 [env.development]
 SUPABASE_URL = "https://cgnmqnohbudnwolkvsae.supabase.co"
 vars = { ENVIRONMENT = "development" }
+
+[observability.logs]
+enabled = true

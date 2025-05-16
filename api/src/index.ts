@@ -3,6 +3,7 @@ import {createSupabaseClient} from "rootDir/supabaseClient.js"
 import { logger } from "hono/logger"
 import CustomLogger from "@/helpers/customLogger.js"
 import auth from '@/routes/auth.js'
+import healthCheck from '@/routes/healthCheck.js'
 
 import {env} from "hono/adapter"
 import {createClient} from "@supabase/supabase-js";
@@ -28,6 +29,7 @@ app.use('*', async (c, next) => {
 
 app.use(logger(CustomLogger))
 app.route('/auth', auth)
+app.route('/health-check', healthCheck)
 
 // Export the fetch handler for Cloudflare Workers
 export default {
