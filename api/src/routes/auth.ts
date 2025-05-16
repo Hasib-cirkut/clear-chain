@@ -1,54 +1,44 @@
-import {Hono} from "hono";
+import { Hono } from 'hono';
 
-import {register, login} from "@/services/auth.js";
-import type {createClient} from "@supabase/supabase-js";
+import { register, login } from '@/services/auth.js';
+import type { THono } from '@/types/global.js';
 
-type Env = {
-    SUPABASE_URL: string,
-    SUPABASE_KEY: string,
-}
+const auth = new Hono<THono>();
 
-type Variables = {
-    supabase: ReturnType<typeof createClient>
-}
+auth.post('/register', async c => {
+  const body = await c.req.json();
 
-const auth = new Hono<{Bindings: Env; Variables: Variables}>()
+  const { name, email, password } = body;
 
-auth.post("/register", async (c) => {
-    const body = await c.req.json()
+  if (!email || !password) {
+    return c.json({ error: 'Missing email or password' }, 400);
+  }
 
-    const {name, email, password} = body
+  const result = await register(c.get('supabase'), { name, email, password });
 
-    if(!email || !password) {
-        return c.json({error: 'Missing email or password'}, 400)
-    }
+  if (result.error) {
+    return c.json({ error: result.error }, result.status);
+  }
 
-    const result = await register(c.get('supabase'), {name, email, password})
+  return c.json({ message: 'User created successfully', data: result.data }, 201);
+});
 
-    if(result.error) {
-        return c.json({error: result.error}, result.status)
-    }
+auth.post('/login', async c => {
+  const body = await c.req.json();
 
-    return c.json({message: 'User created successfully', data: result.data}, 201)
-})
+  const { email, password } = body;
 
+  if (!email || !password) {
+    return c.json({ error: 'Missing email or password' }, 400);
+  }
 
-auth.post("/login", async (c) => {
-    const body = await c.req.json()
+  const result = await login(c, { email, password });
 
-    const {email, password} = body
+  if (result.error) {
+    return c.json({ error: result.error }, result.status);
+  }
 
-    if(!email || !password) {
-        return c.json({error: 'Missing email or password'}, 400)
-    }
+  return c.json({ message: 'Login Successful', data: result.data }, 200);
+});
 
-    const result = await login(c.get('supabase'), {email, password})
-
-    if(result.error) {
-        return c.json({error: result.error}, result.status)
-    }
-
-    return c.json({message: 'Login Successful', data: result.data}, 200)
-})
-
-export default auth
+export default auth;

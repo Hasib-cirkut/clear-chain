@@ -1,61 +1,86 @@
-import bcrypt from 'bcryptjs'
+import { SupabaseClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
+import type { Context } from 'hono';
 // @ts-expect-error TypeScript can't refer to node_modules for now
-import type {StatusCode} from "hono/dist/types/utils/http-status.js";
+import type { StatusCode } from 'hono/dist/types/utils/http-status.js';
+import { sign } from 'hono/jwt';
 
-import type {RegisterInput, LoginInput} from "@/types/user.js";
-import CustomLogger from "@/helpers/customLogger.js";
-import {SupabaseClient} from "@supabase/supabase-js";
+import CustomLogger from '@/helpers/customLogger.js';
+import type { THono } from '@/types/global.js';
+import type { RegisterInput, LoginInput } from '@/types/user.js';
 
 export const register = async (supabase: typeof SupabaseClient, input: RegisterInput) => {
-    const {name, email, password} = input;
+  const { name, email, password } = input;
 
-    const {
-        data: existingUser,
-        error: findError
-    } = await supabase.from('users').select('*').eq('email', email).maybeSingle();
+  const { data: existingUser, error: findError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .maybeSingle();
 
-    if (existingUser) {
-        CustomLogger('User already exists', `email: ${email}`)
+  if (existingUser) {
+    CustomLogger('User already exists', `email: ${email}`);
 
-        return {error: 'User already exists', status: 409 as StatusCode, data: null};
-    }
+    return { error: 'User already exists', status: 409 as StatusCode, data: null };
+  }
 
-    if (findError) {
-        CustomLogger(findError.message, `email: ${email}`)
+  if (findError) {
+    CustomLogger(findError.message, `email: ${email}`);
 
-        return {error: findError.message, status: 500 as StatusCode, data: null};
-    }
+    return { error: findError.message, status: 500 as StatusCode, data: null };
+  }
 
-    const password_hash = await bcrypt.hash(password, 10);
-    const {data, error} = await supabase.from('users').insert([{name, email, password_hash}]);
+  const password_hash = await bcrypt.hash(password, 10);
+  const { data, error } = await supabase.from('users').insert([{ name, email, password_hash }]);
 
-    if (error) {
-        return {error: error.message, status: 500 as StatusCode, data: null};
-    }
+  if (error) {
+    return { error: error.message, status: 500 as StatusCode, data: null };
+  }
 
-    return {error: null, status: 201 as StatusCode, data};
-}
+  return { error: null, status: 201 as StatusCode, data };
+};
 
-export const login = async (supabase: typeof  SupabaseClient, input: LoginInput) => {
-    const {email, password} = input
+export const login = async (c: Context<THono>, input: LoginInput) => {
+  const { email, password } = input;
 
-    const {data, error} = await supabase.from('users').select('*').eq('email', email).maybeSingle();
+  const supabase = c.get('supabase');
 
-    if(error){
-        CustomLogger(error.message, `email: ${email}`)
+  const { data, error } = await supabase.from('users').select('*').eq('email', email).maybeSingle();
 
-        return {error: error.message, status: 500 as StatusCode, data: null};
-    }
+  if (error) {
+    CustomLogger(error.message, `email: ${email}`);
 
-    const is_correct_password = await bcrypt.compare(password, data.password_hash);
+    return { error: error.message, status: 500 as StatusCode, data: null };
+  }
 
-    if(is_correct_password){
-        const payload = {...data}
+  const is_correct_password = await bcrypt.compare(password, data.password_hash);
 
-        delete payload.password_hash
+  if (!is_correct_password) {
+    return { error: 'Invalid credentials', status: 401 as StatusCode, data: null };
+  }
 
-        return {error: null, status: 200 as StatusCode, data: payload};
-    }
+  const accessToken = await sign(
+    {
+      email: data.email,
+      sub: data.id,
+      type: 'access',
+      exp: Math.floor(Date.now() / 1000) + 60 * 15,
+    },
+    c.env.JWT_SECRET
+  );
 
-    return {error: 'Invalid credentials', status: 401 as StatusCode, data: null};
+  const refreshToken = await sign(
+    {
+      email: data.email,
+      sub: data.id,
+      type: 'access',
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+    },
+    c.env.JWT_SECRET
+  );
+
+  const payload = { ...data, accessToken, refreshToken };
+  delete payload.password_hash;
+
+  return { error: null, status: 200 as StatusCode, data: payload };
 };

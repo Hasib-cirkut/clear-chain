@@ -1,11 +1,9 @@
-import {Hono} from "hono"
-// @ts-ignore
-import type {StatusCode} from "hono/dist/types/utils/http-status.js";
+import { Hono } from 'hono';
 
-const healthCheck = new Hono()
+const healthCheck = new Hono();
 
-healthCheck.get('/', (c) => {
-    return c.json({message: 'healthy'}, 200 as StatusCode)
-})
+healthCheck.get('/', c => {
+  return c.json({ message: 'healthy' });
+});
 
-export default healthCheck
+export default healthCheck;
