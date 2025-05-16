@@ -1,6 +1,7 @@
 {
   "name": "clear-chain",
   "type": "module",
+  "packageManager": "yarn@4.5.0",
   "scripts": {
     "dev": "wrangler dev src/index.ts",
     "build": "wrangler deploy --dry-run",
