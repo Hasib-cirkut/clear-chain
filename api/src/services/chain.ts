@@ -5,4 +5,4 @@ export type chain = {
   taker_id?: string;
   initial_amount: number;
   status: string; // active / completed
-}
+};
