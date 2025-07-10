@@ -1,0 +1,80 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [ main, dev ]
+
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.changes.outputs.api }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            api:
+              - 'api/**'
+
+  api-test-and-lint:
+    name: API - Test & Lint
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21.7.3'
+          cache: 'yarn'
+          cache-dependency-path: 'api/yarn-lock'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: ./api
+
+      - name: Run linting
+        run: npm run lint
+        working-directory: ./api
+
+      - name: Run build test
+        run: npm run build
+        working-directory: ./api
+
+  api-deploy-production:
+    name: API - Deploy to Production
+    needs: [ changes, api-test-and-lint ]
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.api == 'true' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21.7.3'
+          cache: 'yarn'
+          cache-dependency-path: 'api/yarn-lock'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: ./api
+
+      - name: Deploy to Cloudflare Workers (Production)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          environment: 'production'
+
