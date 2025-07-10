@@ -55,7 +55,7 @@ export const login = async (c: Context<THono>, input: LoginInput) => {
   const is_correct_password = await bcrypt.compare(password, data.password_hash);
 
   if (!is_correct_password) {
-    return { error: 'Invalid credentials.', status: 401, data: null };
+    return { error: 'Invalid credentials', status: 401, data: null };
   }
 
   const accessToken = await sign(
