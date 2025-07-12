@@ -89,7 +89,7 @@ export const refreshToken = async (c: Context<THono>, refreshToken: string) => {
     const payload = await verify(refreshToken, c.env.JWT_SECRET);
 
     if (!payload || payload.type !== REFRESH) {
-      return { error: 'Invalid Token.', status: 401, data: null };
+      return { error: 'Invalid Token', status: 401, data: null };
     }
 
     const supabase = c.get(SUPABASE);
