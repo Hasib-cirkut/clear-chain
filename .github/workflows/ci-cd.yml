@@ -79,5 +79,3 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: './api'
           environment: 'production'
-          command: 'deploy --build-command "yarn && yarn build"'
-

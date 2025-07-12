@@ -5,6 +5,9 @@ compatibility_date = "2023-12-01"
 [dev]
 port = 3000
 
+[build]
+command = "yarn && yarn build"
+
 [env.production]
 vars = { ENVIRONMENT = "production" }
 
