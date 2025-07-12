@@ -2,10 +2,6 @@ name = "clear-chain"
 main = "src/index.ts"
 compatibility_date = "2023-12-01"
 
-# Removed build command to prevent circular reference
-# [build]
-# command = "yarn build"
-
 [dev]
 port = 3000
 

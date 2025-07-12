@@ -6,6 +6,7 @@
     "dev": "wrangler dev src/index.ts",
     "build": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy",
+    "deploy:prod": "wrangler deploy --env production",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
