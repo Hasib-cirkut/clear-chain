@@ -53,20 +53,6 @@ jobs:
     if: needs.changes.outputs.api == 'true' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-  api-deploy-production:
-    name: API - Deploy to Production
-    needs: [ changes, api-test-and-lint ]
-    runs-on: ubuntu-latest
-    if: needs.changes.outputs.api == 'true' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -80,10 +66,8 @@ jobs:
         run: yarn install --frozen-lockfile
         working-directory: ./api
 
-      - name: Deploy to Cloudflare Workers (Production)
+      - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: './api'
-          environment: 'production'
+          workingDirectory: ./api
