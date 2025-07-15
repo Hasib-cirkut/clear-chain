@@ -1,10 +1,7 @@
+name = "clear-chain-api"
 compatibility_date = "2023-12-01"
 main = "src/index.ts"
 minify = true
-
-# Removed build command to prevent circular reference
-# [build]
-# command = "yarn build"
 
 [dev]
 port = 3000
