@@ -1,6 +1,6 @@
 export type TUser = {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
   password_hash?: string;
   created_at: string;

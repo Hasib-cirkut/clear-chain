@@ -15,7 +15,9 @@ const app = new Hono<THono>();
 app.use('*', async (c, next) => {
   const { SUPABASE_URL, SUPABASE_KEY } = env<{ SUPABASE_URL: string; SUPABASE_KEY: string }>(c);
 
-  c.set('supabase', createSupabaseClient(SUPABASE_URL, SUPABASE_KEY));
+  const supabaseClient = createSupabaseClient(SUPABASE_URL, SUPABASE_KEY);
+
+  c.set('supabase', supabaseClient);
 
   await next();
 });

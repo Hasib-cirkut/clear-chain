@@ -10,7 +10,7 @@ export async function getUsers(c: Context<THono>) {
   const { data: users, error } = await supabase.from('users').select('*');
 
   if (error) {
-    return { error: error.message, status: 500, data: null };
+    return { error: error, status: 500, data: null };
   }
 
   const cleanData = users.map((user: TUser) => {

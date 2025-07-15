@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import type { Context } from 'hono';
 import { sign, verify } from 'hono/jwt';
@@ -8,7 +8,7 @@ import CustomLogger from '@/helpers/customLogger.js';
 import type { THono } from '@/types/global.js';
 import type { RegisterInput, LoginInput } from '@/types/user.js';
 
-export const register = async (supabase: typeof SupabaseClient, input: RegisterInput) => {
+export const register = async (supabase: SupabaseClient, input: RegisterInput) => {
   const { name, email, password } = input;
 
   const { data: existingUser, error: findError } = await supabase
@@ -52,6 +52,12 @@ export const login = async (c: Context<THono>, input: LoginInput) => {
     return { error: error.message, status: 500, data: null };
   }
 
+  if (data === null) {
+    CustomLogger('Account associated with this email not found.', `email: ${email}`);
+
+    return { error: 'Account associated with this email not found.', status: 500, data: null };
+  }
+
   const is_correct_password = await bcrypt.compare(password, data.password_hash);
 
   if (!is_correct_password) {
@@ -78,8 +84,15 @@ export const login = async (c: Context<THono>, input: LoginInput) => {
     c.env.JWT_SECRET
   );
 
-  const payload = { ...data, accessToken };
-  delete payload.password_hash;
+  const payload: any = {};
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== 'password_hash') {
+      payload[key] = value;
+    }
+  });
+
+  payload.accessToken = accessToken;
 
   return { error: null, status: 200, data: payload, refreshToken };
 };
@@ -97,7 +110,7 @@ export const refreshToken = async (c: Context<THono>, refreshToken: string) => {
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('id', payload.sub)
+      .eq('id', payload.sub as string)
       .maybeSingle();
 
     if (error || !user) {
